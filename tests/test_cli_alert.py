@@ -12,16 +12,21 @@ def _make_runner() -> CliRunner:
     return CliRunner(mix_stderr=False)
 
 
+def _make_mock_client(log_lines: list[str]) -> MagicMock:
+    """Create a mock DockerLogClient that streams the given log lines."""
+    mock_client = MagicMock()
+    mock_client.stream_logs.return_value = iter(log_lines)
+    return mock_client
+
+
 @patch("logslice.cli_alert.DockerLogClient")
 def test_alert_streams_lines(mock_client_cls):
-    mock_client = MagicMock()
-    mock_client.stream_logs.return_value = iter(
+    mock_client_cls.return_value = _make_mock_client(
         [
             '{"level": "INFO", "message": "started"}',
             '{"level": "ERROR", "message": "crash"}',
         ]
     )
-    mock_client_cls.return_value = mock_client
 
     runner = _make_runner()
     result = runner.invoke(alert_command, ["my_container", "--level", "ERROR", "--threshold", "1"])
@@ -32,13 +37,11 @@ def test_alert_streams_lines(mock_client_cls):
 
 @patch("logslice.cli_alert.DockerLogClient")
 def test_alert_fires_on_threshold(mock_client_cls):
-    mock_client = MagicMock()
-    mock_client.stream_logs.return_value = iter(
+    mock_client_cls.return_value = _make_mock_client(
         [
             '{"level": "ERROR", "message": "bad thing"}',
         ]
     )
-    mock_client_cls.return_value = mock_client
 
     runner = _make_runner()
     result = runner.invoke(
@@ -53,13 +56,11 @@ def test_alert_fires_on_threshold(mock_client_cls):
 
 @patch("logslice.cli_alert.DockerLogClient")
 def test_alert_no_fire_below_threshold(mock_client_cls):
-    mock_client = MagicMock()
-    mock_client.stream_logs.return_value = iter(
+    mock_client_cls.return_value = _make_mock_client(
         [
             '{"level": "ERROR", "message": "one error"}',
         ]
     )
-    mock_client_cls.return_value = mock_client
 
     runner = _make_runner()
     result = runner.invoke(
