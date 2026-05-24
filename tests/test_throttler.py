@@ -31,6 +31,11 @@ def test_zero_max_allowed_raises():
         Throttler(window_seconds=1, max_allowed=0)
 
 
+def test_negative_max_allowed_raises():
+    with pytest.raises(ThrottlerError, match="max_allowed"):
+        Throttler(window_seconds=1, max_allowed=-1)
+
+
 # ---------------------------------------------------------------------------
 # Core allow logic
 # ---------------------------------------------------------------------------
@@ -51,6 +56,13 @@ def test_occurrence_after_window_expires_is_allowed():
     t.allow(_entry("msg"), now=100.0)
     # 15 seconds later — outside the window
     assert t.allow(_entry("msg"), now=115.0) is True
+
+
+def test_occurrence_exactly_at_window_boundary_is_throttled():
+    """An event at exactly window_seconds after the first should still be throttled."""
+    t = Throttler(window_seconds=10)
+    t.allow(_entry("msg"), now=100.0)
+    assert t.allow(_entry("msg"), now=110.0) is False
 
 
 def test_different_messages_are_independent():
