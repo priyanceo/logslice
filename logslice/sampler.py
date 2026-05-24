@@ -15,7 +15,13 @@ class SamplerError(Exception):
 
 @dataclass
 class Sampler:
-    """Configurable log entry sampler."""
+    """Configurable log entry sampler.
+
+    Attributes:
+        every_nth: Keep every Nth entry; 1 means keep all entries.
+        rate: Probability in (0.0, 1.0] that a candidate entry is kept
+              after the ``every_nth`` filter has passed it.
+    """
 
     every_nth: int = 1          # keep every Nth entry (1 = keep all)
     rate: float = 1.0           # random keep probability in [0.0, 1.0]
@@ -26,6 +32,10 @@ class Sampler:
             raise SamplerError("every_nth must be >= 1")
         if not (0.0 < self.rate <= 1.0):
             raise SamplerError("rate must be in range (0.0, 1.0]")
+
+    def reset(self) -> None:
+        """Reset the internal counter, allowing the sampler to be reused."""
+        self._counter = 0
 
     def should_keep(self, entry: LogEntry) -> bool:  # noqa: ARG002
         """Return True if this entry should be kept."""
