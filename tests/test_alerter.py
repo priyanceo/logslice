@@ -103,3 +103,26 @@ def test_wrong_level_not_counted(engine):
     engine.process(_entry("INFO", "all good"))
 
     callback.assert_not_called()
+
+
+def test_multiple_rules_independent_counts(engine):
+    """Each rule should maintain its own independent counter."""
+    error_rule = AlertRule(level="ERROR", threshold=2, name="error-rule")
+    warn_rule = AlertRule(level="WARN", threshold=2, name="warn-rule")
+    engine.add_rule(error_rule)
+    engine.add_rule(warn_rule)
+    callback = MagicMock()
+    engine.on_alert(callback)
+
+    engine.process(_entry("ERROR"))
+    engine.process(_entry("WARN"))
+
+    # Neither rule has reached its threshold of 2 yet
+    callback.assert_not_called()
+
+    engine.process(_entry("ERROR"))
+
+    # Only the error rule should have fired
+    assert callback.call_count == 1
+    fired_rule, _ = callback.call_args[0]
+    assert fired_rule.name == "error-rule"
