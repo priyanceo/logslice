@@ -1,11 +1,11 @@
-"""Root CLI entry-point for logslice."""
+"""Root CLI group — registers all sub-commands."""
 from __future__ import annotations
 
 import click
 
+from logslice.cli_browse import browse_command
 from logslice.cli_export import export_command
 from logslice.cli_tui import browse_command as tui_command
-from logslice.cli_browse import browse_command
 from logslice.cli_stats import stats_command
 from logslice.cli_alert import alert_command
 from logslice.cli_replay import replay_command
@@ -20,17 +20,20 @@ from logslice.cli_route import route_command
 from logslice.cli_split import split_command
 from logslice.cli_enrich import enrich_command
 from logslice.cli_mask import mask_command
+from logslice.cli_classify import classify_command
+from logslice.cli_sequence import sequence_command
+from logslice.cli_tail import tail_command
 
 
 @click.group()
-@click.version_option()
+@click.version_option(package_name="logslice")
 def cli() -> None:
     """logslice — filter, tail, and export structured Docker logs."""
 
 
-cli.add_command(export_command, name="export")
-cli.add_command(tui_command, name="tui")
 cli.add_command(browse_command, name="browse")
+cli.add_command(tui_command, name="tui")
+cli.add_command(export_command, name="export")
 cli.add_command(stats_command, name="stats")
 cli.add_command(alert_command, name="alert")
 cli.add_command(replay_command, name="replay")
@@ -45,3 +48,6 @@ cli.add_command(route_command, name="route")
 cli.add_command(split_command, name="split")
 cli.add_command(enrich_command, name="enrich")
 cli.add_command(mask_command, name="mask")
+cli.add_command(classify_command, name="classify")
+cli.add_command(sequence_command, name="sequence")
+cli.add_command(tail_command, name="tail")
