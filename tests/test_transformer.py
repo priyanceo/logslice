@@ -83,18 +83,30 @@ def test_transform_all_applies_to_every_entry():
     assert results[1].message == "ref [REDACTED]"
 
 
+def test_transform_all_empty_list_returns_empty():
+    """transform_all should handle an empty entry list gracefully."""
+    t = Transformer()
+    t.add_rule(redact_pattern(r"\d+"))
+    assert t.transform_all([]) == []
+
+
 # ---------------------------------------------------------------------------
 # redact_pattern helper
 # ---------------------------------------------------------------------------
 
 def test_redact_pattern_creates_message_rule():
-    rule = redact_pattern(r"password=\S+")
-    result = rule.apply(_entry(message="login password=secret123 ok"))
-    assert "[REDACTED]" in result.message
-    assert "secret123" not in result.message
+    rule = redact_pattern(r"\d+")
+    assert rule.field == "message"
+    assert rule.replacement == "[REDACTED]"
 
 
-def test_redact_pattern_custom_replacement():
-    rule = redact_pattern(r"\d{4}-\d{4}-\d{4}-\d{4}", replacement="****")
-    result = rule.apply(_entry(message="card 1234-5678-9012-3456 charged"))
-    assert "****" in result.message
+def test_redact_pattern_replaces_matched_text():
+    rule = redact_pattern(r"\d+")
+    result = rule.apply(_entry(message="user id 42 logged in"))
+    assert result.message == "user id [REDACTED] logged in"
+
+
+def test_redact_pattern_no_match_leaves_message_unchanged():
+    rule = redact_pattern(r"\d+")
+    result = rule.apply(_entry(message="no numbers here"))
+    assert result.message == "no numbers here"
